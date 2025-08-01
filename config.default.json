@@ -1,0 +1,11 @@
+{
+  "env": "development",
+  "port": 3000,
+  "db": {
+    "type": "mysql",
+    "host": "localhost",
+    "user": "egs",
+    "password": "eg12",
+    "database": "swipjy"
+  }
+}

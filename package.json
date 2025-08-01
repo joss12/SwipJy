@@ -1,0 +1,56 @@
+{
+    "name": "swipjy",
+    "version": "1.0.16",
+    "description": "⚡️ Minimalist Node.js backend framework with JSX views, hydration, CLI generator, and middleware support.",
+    "bin": {
+        "swipjy": "./bin/swipjy.js"
+    },
+    "main": "lib/index.js",
+    "exports": {
+        ".": "./lib/index.js",
+        "./static": "./lib/static.js"
+    },
+    "type": "commonjs",
+    "scripts": {
+        "start": "node app.js"
+    },
+    "keywords": [
+        "backend",
+        "framework",
+        "nodejs",
+        "jsx",
+        "cli",
+        "react",
+        "ssr"
+    ],
+    "author": "Eddy Joss Axel Mouity",
+    "license": "MIT",
+    "files": [
+        "lib",
+        "bin",
+        "cli",
+        "public",
+        "views",
+        "commands",
+        "templates"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yourusername/swipjy.git"
+    },
+    "bugs": {
+        "url": "https://github.com/yourusername/swipjy/issues"
+    },
+    "homepage": "https://github.com/yourusername/swipjy#readme",
+    "dependencies": {
+        "chalk": "^4.1.2",
+        "dotenv": "^17.2.1",
+        "esbuild": "^0.21.4",
+        "esbuild-register": "^3.5.0",
+        "mongodb": "^6.18.0",
+        "mysql2": "^3.14.3",
+        "pg": "^8.16.3",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    }
+}

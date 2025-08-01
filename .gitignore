@@ -1,0 +1,25 @@
+# Node modules and environment
+node_modules/
+.env
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE config
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts and bundles
+dist/
+public/home.bundle.js
+public/*.bundle.js
+*.bundle.js
+
+# Temp
+tmp/
+.cache/
+

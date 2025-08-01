@@ -1,0 +1,14 @@
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "type": "commonjs",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js"
+    },
+    "dependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "swipjy": "*"
+    }
+}

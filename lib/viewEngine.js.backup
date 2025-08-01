@@ -1,0 +1,293 @@
+// lib/viewEngine.js - Enhanced with JSX file loading
+const fs = require("fs");
+const path = require("path");
+const React = require("react");
+const ReactDOMServer = require("react-dom/server");
+const esbuild = require("esbuild");
+
+// Cache for compiled components
+const componentCache = new Map();
+
+function render(viewName, data = {}) {
+    console.log(`🔧 Rendering view: ${viewName} with data:`, data);
+
+    // Try to load JSX file first, fallback to hardcoded component
+    let Component;
+
+    try {
+        Component = loadJSXComponent(viewName);
+        console.log(`✅ Loaded JSX component: ${viewName}`);
+    } catch (error) {
+        console.warn(
+            `⚠️  Could not load JSX file for ${viewName}: ${error.message}`,
+        );
+        console.log(`🔄 Using fallback component for ${viewName}`);
+        Component = getFallbackComponent(viewName);
+    }
+
+    if (typeof Component !== "function") {
+        throw new Error(
+            `Expected React component function, got: ${typeof Component}`,
+        );
+    }
+
+    // Sanitize props
+    const sanitizedData = sanitizeProps(data);
+
+    // Create and render element
+    const element = React.createElement(Component, sanitizedData);
+    const html = ReactDOMServer.renderToStaticMarkup(element);
+
+    return "<!DOCTYPE html>" + html;
+}
+
+function loadJSXComponent(viewName) {
+    const viewPath = path.join(process.cwd(), "views", `${viewName}.jsx`);
+
+    if (!fs.existsSync(viewPath)) {
+        throw new Error(`View file not found: ${viewPath}`);
+    }
+
+    // Check cache first
+    const stats = fs.statSync(viewPath);
+    const cacheKey = `${viewPath}:${stats.mtime.getTime()}`;
+
+    if (componentCache.has(cacheKey)) {
+        return componentCache.get(cacheKey);
+    }
+
+    // Clear old cache entries for this file
+    for (const key of componentCache.keys()) {
+        if (key.startsWith(viewPath + ":")) {
+            componentCache.delete(key);
+        }
+    }
+
+    // Read and transform the file
+    let fileContent = fs.readFileSync(viewPath, "utf8");
+
+    // Auto-inject React import if missing
+    if (!includesReactImport(fileContent)) {
+        fileContent = 'const React = require("react");\n' + fileContent;
+    }
+
+    // Transform export syntax
+    fileContent = transformExports(fileContent);
+
+    // Use esbuild to compile JSX
+    const result = esbuild.transformSync(fileContent, {
+        jsx: "transform",
+        jsxFactory: "React.createElement",
+        jsxFragment: "React.Fragment",
+        loader: "jsx",
+        format: "cjs",
+        target: "node14",
+        sourcemap: false,
+    });
+
+    // Create a safe execution context
+    const Component = executeCompiledCode(result.code, viewPath);
+
+    // Cache the component
+    componentCache.set(cacheKey, Component);
+
+    return Component;
+}
+
+function includesReactImport(content) {
+    return (
+        content.includes('require("react")') ||
+        content.includes("require('react')") ||
+        content.includes("import React") ||
+        content.includes('from "react"') ||
+        content.includes("from 'react'")
+    );
+}
+
+function transformExports(content) {
+    // Handle various export patterns
+
+    // export default ComponentName;
+    content = content.replace(
+        /export\s+default\s+(\w+)\s*;?\s*$/gm,
+        "module.exports = $1;",
+    );
+
+    // export default function ComponentName() { ... }
+    if (content.includes("export default function")) {
+        content = content.replace(
+            /export\s+default\s+function\s+(\w+)/g,
+            "function $1",
+        );
+
+        // Find the function name and add module.exports
+        const functionMatch = content.match(/function\s+(\w+)/);
+        if (functionMatch) {
+            content += `\nmodule.exports = ${functionMatch[1]};`;
+        }
+    }
+
+    // export { ComponentName as default };
+    content = content.replace(
+        /export\s*{\s*(\w+)\s+as\s+default\s*}\s*;?\s*$/gm,
+        "module.exports = $1;",
+    );
+
+    return content;
+}
+
+function executeCompiledCode(compiledCode, filePath) {
+    try {
+        // Create a module context
+        const moduleContext = {
+            exports: {},
+            module: { exports: {} },
+            require: require,
+            React: React,
+            console: console,
+            __filename: filePath,
+            __dirname: path.dirname(filePath),
+        };
+
+        // Create the execution function
+        const executeCode = new Function(
+            "module",
+            "exports",
+            "require",
+            "React",
+            "console",
+            "__filename",
+            "__dirname",
+            compiledCode + "\nreturn module.exports;",
+        );
+
+        // Execute the code
+        const result = executeCode(
+            moduleContext.module,
+            moduleContext.exports,
+            moduleContext.require,
+            moduleContext.React,
+            moduleContext.console,
+            moduleContext.__filename,
+            moduleContext.__dirname,
+        );
+
+        // Extract the component
+        return result.default || result;
+    } catch (error) {
+        throw new Error(`Failed to execute compiled JSX: ${error.message}`);
+    }
+}
+
+function getFallbackComponent(viewName) {
+    // Provide different fallback components based on view name
+    switch (viewName) {
+        case "home":
+            return function Home(props) {
+                return React.createElement(
+                    "html",
+                    null,
+                    React.createElement(
+                        "head",
+                        null,
+                        React.createElement("title", null, "Swipjy"),
+                        React.createElement("script", {
+                            type: "module",
+                            src: "/home.bundle.js",
+                        }),
+                    ),
+                    React.createElement(
+                        "body",
+                        null,
+                        React.createElement("h1", null, `Hello, ${props.name || "World"}!`),
+                        React.createElement("p", null, "Welcome to Swipjy! 🚀"),
+                        React.createElement(
+                            "p",
+                            null,
+                            "Create a views/home.jsx file to customize this page.",
+                        ),
+                        React.createElement("div", { id: "root" }),
+                    ),
+                );
+            };
+
+        case "error":
+            return function Error(props) {
+                return React.createElement(
+                    "html",
+                    null,
+                    React.createElement(
+                        "head",
+                        null,
+                        React.createElement("title", null, "Error - Swipjy"),
+                    ),
+                    React.createElement(
+                        "body",
+                        null,
+                        React.createElement("h1", null, "Error"),
+                        React.createElement(
+                            "p",
+                            null,
+                            props.message || "Something went wrong",
+                        ),
+                        React.createElement("div", { id: "root" }),
+                    ),
+                );
+            };
+
+        default:
+            return function DefaultView(props) {
+                return React.createElement(
+                    "html",
+                    null,
+                    React.createElement(
+                        "head",
+                        null,
+                        React.createElement("title", null, `${viewName} - Swipjy`),
+                    ),
+                    React.createElement(
+                        "body",
+                        null,
+                        React.createElement("h1", null, `${viewName} page`),
+                        React.createElement(
+                            "p",
+                            null,
+                            `Create a views/${viewName}.jsx file to customize this page.`,
+                        ),
+                        React.createElement("div", { id: "root" }),
+                    ),
+                );
+            };
+    }
+}
+
+function sanitizeProps(props) {
+    const sanitized = {};
+
+    for (const [key, value] of Object.entries(props)) {
+        if (value && typeof value === "object" && value.$$typeof) {
+            console.warn(
+                `⚠️  Swipjy: Prop "${key}" contains a React element, converting to string`,
+            );
+            sanitized[key] = "[ReactElement]";
+        } else if (typeof value === "function") {
+            console.warn(`⚠️  Swipjy: Prop "${key}" contains a function, skipping`);
+        } else if (typeof value === "object" && value !== null) {
+            try {
+                JSON.stringify(value);
+                sanitized[key] = value;
+            } catch (error) {
+                console.warn(
+                    `⚠️  Swipjy: Prop "${key}" contains circular reference, converting to string`,
+                );
+                sanitized[key] = String(value);
+            }
+        } else {
+            sanitized[key] = value;
+        }
+    }
+
+    return sanitized;
+}
+
+module.exports = { render };

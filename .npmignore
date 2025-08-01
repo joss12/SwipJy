@@ -1,0 +1,30 @@
+# Ignore unnecessary dev files in the published package
+node_modules/
+.env
+*.log
+
+# Source you don’t want in npm package
+test/
+tests/
+__tests__/
+coverage/
+docs/
+scripts/
+
+# Git and project meta
+.git/
+.gitignore
+.npmignore
+
+# OS or editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local bundling output
+public/home.bundle.js
+public/*.bundle.js
+*.bundle.js
+dist/
+
