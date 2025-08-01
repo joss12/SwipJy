@@ -1,8 +1,10 @@
 const Swipjy = require("swipjy");
+const { serveStatic } = require("swipjy");
 const app = new Swipjy();
 
-// Now this should work!
-app.use(Swipjy.serveStatic("public"));
+// Use the instance method for static files
+//app.useStatic("public");
+app.use(serveStatic("public"));
 
 app.get("/", (req, res) => {
     res.render("home", { name: "Swipjy" });
