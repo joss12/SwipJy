@@ -66,10 +66,10 @@ async function create([projectName]) {
 
 function appTemplate() {
     return `const Swipjy = require("swipjy");
-const { serveStatic } = require("swipjy/static");
-
 const app = new Swipjy();
-app.use(serveStatic("public"));
+
+// Static file serving
+app.useStatic("public");
 
 require("./routes/home")(app);
 

@@ -12,6 +12,8 @@
     },
     "type": "commonjs",
     "scripts": {
+        "test": "node test/template-test.js",
+        "test:template": "node test/template-test.js",
         "start": "node app.js"
     },
     "keywords": [
