@@ -38,12 +38,12 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/yourusername/swipjy.git"
+        "url": "https://github.com/joss12/swipjy.git"
     },
     "bugs": {
-        "url": "https://github.com/yourusername/swipjy/issues"
+        "url": "https://github.com/joss12/swipjy/issues"
     },
-    "homepage": "https://github.com/yourusername/swipjy#readme",
+    "homepage": "https://github.com/joss12/swipjy#readme",
     "dependencies": {
         "chalk": "^4.1.2",
         "dotenv": "^17.2.1",
