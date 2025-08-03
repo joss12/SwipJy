@@ -130,6 +130,8 @@ DB_DATABASE=swipjy_db
 }
 
 function packageJsonTemplate(name) {
+    const swipjyVersion = require("../package.json").version;
+
     return JSON.stringify(
         {
             name,
@@ -140,7 +142,7 @@ function packageJsonTemplate(name) {
                 start: "node app.js",
             },
             dependencies: {
-                swipjy: "*",
+                swipjy: `^${swipjyVersion}`,
             },
         },
         null,
