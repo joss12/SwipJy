@@ -1,6 +1,6 @@
 {
     "name": "swipjy",
-    "version": "1.0.21",
+    "version": "1.0.22",
     "description": "⚡️ Minimalist Node.js backend framework with JSX views, hydration, CLI generator, and middleware support.",
     "bin": {
         "swipjy": "./bin/swipjy.js"
