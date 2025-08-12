@@ -57,7 +57,8 @@ async function create([projectName]) {
     console.log(`\n✅ Project "${projectName}" created!\n`);
     console.log(`👉 Next steps:
   cd ${projectName}
-  npm start`);
+  npm start
+        `);
 }
 
 // ------------------------------------

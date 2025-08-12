@@ -1,0 +1,21 @@
+{
+    "scripts": {
+        "test": "jest",
+        "test:db": "jest test/database",
+        "test:mysql": "DB_TYPE=mysql jest test/database",
+        "test:postgres": "DB_TYPE=postgres jest test/database",
+        "test:mongodb": "DB_TYPE=mongodb jest test/database",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage"
+    },
+    "jest": {
+        "testEnvironment": "node",
+        "testMatch": [
+            "**/test/**/*.test.js"
+        ],
+        "setupFilesAfterEnv": [
+            "<rootDir>/test/helpers/setup.js"
+        ],
+        "testTimeout": 30000
+    }
+}
