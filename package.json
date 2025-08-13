@@ -1,6 +1,6 @@
 {
     "name": "swipjy",
-    "version": "1.0.22",
+    "version": "1.0.23",
     "description": "⚡️ Minimalist Node.js backend framework with JSX views, hydration, CLI generator, and middleware support.",
     "bin": {
         "swipjy": "./bin/swipjy.js"
@@ -8,7 +8,8 @@
     "main": "lib/index.js",
     "exports": {
         ".": "./lib/index.js",
-        "./static": "./lib/static.js"
+        "./static": "./lib/static.js",
+        "./lib/*": "./lib/*"
     },
     "type": "commonjs",
     "scripts": {
