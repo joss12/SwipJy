@@ -1,7 +1,22 @@
+"use strict";
+
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 const { createRequire } = require("module");
+
+// Channel switch:
+//   DEV (default): installs swipjy from GitHub main
+//   STABLE: installs from npm (version uses SWIPJY_VERSION or 1.0.27)
+// Usage example:
+//   SWIPJY_CHANNEL=stable SWIPJY_VERSION=1.0.27 npx swipjy create my-app
+const CHANNEL = (process.env.SWIPJY_CHANNEL || "dev").toLowerCase();
+const SWIPJY_DEP =
+  CHANNEL === "stable"
+    ? process.env.SWIPJY_VERSION
+      ? `^${process.env.SWIPJY_VERSION}`
+      : "^1.0.27"
+    : "github:joss12/SwipJy#main";
 
 // ------------------------------
 // Templates
@@ -14,15 +29,19 @@ const app = new Swipjy();
 
 // Optional: router if your package re-exports it; fallback path otherwise
 const createRouter = Swipjy.createRouter || (() => {
-  try { return require("swipjy/lib/router.js"); } catch { return null; }
+  try { return require("swipjy/lib/router.js").createRouter; } catch { return null; }
 })();
 
-if (Swipjy.bootstrap && createRouter) {
+if (createRouter) {
   const router = createRouter(app);
-  Swipjy.bootstrap(app, router); // wires middleware + /echo + /healthz
+  if (typeof Swipjy.bootstrap === "function") {
+    Swipjy.bootstrap(app, router);
+  } else {
+    router.get("/", (ctx) => ctx.send("Hello, Swipjy!"));
+    app.use(router.routes());
+  }
 } else {
-  app.useStatic && app.useStatic("public");
-  require("./routes/home")(app);
+  app.use((ctx) => ctx.send("Hello, Swipjy (no router)!"));
 }
 
 const port = process.env.PORT || 3000;
@@ -85,7 +104,7 @@ DB_DATABASE=swipjy_db
 `;
 }
 
-// Force install from GitHub so the module always exists locally
+// package.json written into the generated app
 function packageJsonTemplate(name) {
   return JSON.stringify(
     {
@@ -99,12 +118,15 @@ function packageJsonTemplate(name) {
           "esbuild views/home.hydrate.jsx --bundle --format=esm --outfile=public/home.bundle.js",
       },
       dependencies: {
-        swipjy: "git+https://github.com/joss12/SwipJy.git",
+        swipjy: SWIPJY_DEP,
         react: "^18.2.0",
         "react-dom": "^18.2.0",
       },
       devDependencies: {
         esbuild: "^0.21.4",
+      },
+      engines: {
+        node: ">=18.0.0",
       },
     },
     null,
@@ -153,22 +175,14 @@ async function create([projectName]) {
 
   try {
     console.log("📦 Installing dependencies...");
-
-    // 1) Install SwipJy FIRST (guarantee require('swipjy') inside the app)
-    console.log("➡️  Installing swipjy from GitHub…");
-    execSync(
-      "npm install git+https://github.com/joss12/SwipJy.git --save-exact",
-      { stdio: "inherit", cwd: projectPath },
-    );
-
-    // 2) Install the rest from package.json (react, react-dom, esbuild, etc.)
+    // IMPORTANT: Single plain install; do NOT force git/tarball
     execSync("npm install", { stdio: "inherit", cwd: projectPath });
 
-    // 3) Verify swipjy is resolvable FROM THE PROJECT (not from the CLI)
+    // Verify swipjy is resolvable FROM THE PROJECT (not from the CLI)
     const projectRequire = createRequire(path.join(projectPath, "app.js"));
     projectRequire.resolve("swipjy");
 
-    // 4) Build client bundle using the project's esbuild
+    // Build client bundle using the project's esbuild
     console.log("⚙️  Building client bundle...");
     execSync("npm run build:client", { stdio: "inherit", cwd: projectPath });
   } catch (err) {

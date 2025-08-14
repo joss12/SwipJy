@@ -6,15 +6,17 @@
   "main": "app.js",
   "scripts": {
     "dev": "nodemon app.js",
-    "start": "node app.js"
+    "start": "node app.js",
+    "build:client": "esbuild views/home.hydrate.jsx --bundle --format=esm --outfile=public/home.bundle.js"
   },
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "swipjy": "^1.0.27"
+    "swipjy": "github:joss12/SwipJy#main"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "esbuild": "^0.21.4"
   },
   "engines": {
     "node": ">=18.0.0"
