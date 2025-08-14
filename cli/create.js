@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
-const bundle = require("../cli/bundle"); // keep this if it's your bundler
+const bundle = require("../cli/bundle"); // keep if this is your bundler path
 
 function appTemplate() {
   // Uses bootstrap if Swipjy.bootstrap exists; falls back if not
@@ -25,7 +25,9 @@ if (Swipjy.bootstrap && createRouter) {
 }
 
 const port = process.env.PORT || 3000;
-const server = http.createServer(app.handle || app.handler || app.callback || ((req, res) => app.serve(req, res)));
+const server = http.createServer(
+  app.handle || app.handler || app.callback || ((req, res) => app.serve(req, res))
+);
 
 server.listen(port, () => {
   console.log("🚀 Swipjy running at http://localhost:" + port);
@@ -82,8 +84,13 @@ DB_DATABASE=swipjy_db
 `;
 }
 
+// If you want to force GitHub for generated apps, set SWIPJY_GIT=1 before running the CLI.
 function packageJsonTemplate(name) {
-  // Use latest to avoid ETARGET; local tarball override handled during install
+  const fromGit = !!process.env.SWIPJY_GIT;
+  const swipjyDep = fromGit
+    ? "git+https://github.com/joss12/SwipJy.git"
+    : "latest";
+
   return JSON.stringify(
     {
       name,
@@ -94,7 +101,7 @@ function packageJsonTemplate(name) {
         start: "node app.js",
       },
       dependencies: {
-        swipjy: "latest",
+        swipjy: swipjyDep,
         react: "^18.2.0",
         "react-dom": "^18.2.0",
       },
@@ -150,15 +157,27 @@ async function create([projectName]) {
 
   try {
     console.log("📦 Installing dependencies...");
+
+    // Ensure swipjy gets installed one way or another so the app runs
     if (localTarball && fs.existsSync(localTarball)) {
-      // Install the local tarball first; it overrides "latest" in package.json
+      console.log(`➡️  Using local tarball: ${localTarball}`);
       execSync(`npm install "${localTarball}"`, { stdio: "inherit" });
-      // Then install the rest (react, react-dom are already in package.json)
-      execSync("npm install", { stdio: "inherit" });
     } else {
-      // Normal path: install everything from package.json
-      execSync("npm install", { stdio: "inherit" });
+      try {
+        console.log("➡️  Installing swipjy@latest from npm…");
+        execSync("npm install swipjy@latest", { stdio: "inherit" });
+      } catch (e) {
+        console.log(
+          "⚠️  npm install swipjy@latest failed. Falling back to GitHub…",
+        );
+        execSync("npm install git+https://github.com/joss12/SwipJy.git", {
+          stdio: "inherit",
+        });
+      }
     }
+
+    // Install the rest (react, react-dom, etc.)
+    execSync("npm install", { stdio: "inherit" });
 
     console.log("⚙️  Bundling hydration file...");
     await bundle(["view", "home"]);
