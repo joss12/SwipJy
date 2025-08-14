@@ -1,7 +1,12 @@
 {
   "name": "swipjy",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "description": "A lightweight Node.js backend framework with JSX SSR and CLI project generator.",
+  "type": "commonjs",
+  "main": "lib/index.js",
+  "bin": {
+    "swipjy": "bin/swipjy.js"
+  },
   "scripts": {
     "test": "node test/template-test.js",
     "test:template": "node test/template-test.js",

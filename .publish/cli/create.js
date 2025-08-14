@@ -1,10 +1,11 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
-const bundle = require("../cli/bundle"); // keep this if it's your bundler
 
+// ------------------------------
+// Templates
+// ------------------------------
 function appTemplate() {
-  // Uses bootstrap if Swipjy.bootstrap exists; falls back if not
   return `const http = require("http");
 const Swipjy = require("swipjy");
 
@@ -25,7 +26,9 @@ if (Swipjy.bootstrap && createRouter) {
 }
 
 const port = process.env.PORT || 3000;
-const server = http.createServer(app.handle || app.handler || app.callback || ((req, res) => app.serve(req, res)));
+const server = http.createServer(
+  app.handle || app.handler || app.callback || ((req, res) => app.serve(req, res))
+);
 
 server.listen(port, () => {
   console.log("🚀 Swipjy running at http://localhost:" + port);
@@ -82,8 +85,13 @@ DB_DATABASE=swipjy_db
 `;
 }
 
+// If you want to force GitHub for generated apps, run with SWIPJY_GIT=1
 function packageJsonTemplate(name) {
-  // Use latest to avoid ETARGET; local tarball override handled during install
+  const fromGit = !!process.env.SWIPJY_GIT;
+  const swipjyDep = fromGit
+    ? "git+https://github.com/joss12/SwipJy.git"
+    : "latest";
+
   return JSON.stringify(
     {
       name,
@@ -92,11 +100,16 @@ function packageJsonTemplate(name) {
       type: "commonjs",
       scripts: {
         start: "node app.js",
+        "build:client":
+          "esbuild views/home.hydrate.jsx --bundle --format=esm --outfile=public/home.bundle.js",
       },
       dependencies: {
-        swipjy: "latest",
+        swipjy: swipjyDep,
         react: "^18.2.0",
         "react-dom": "^18.2.0",
+      },
+      devDependencies: {
+        esbuild: "^0.21.4",
       },
     },
     null,
@@ -104,6 +117,9 @@ function packageJsonTemplate(name) {
   );
 }
 
+// ------------------------------
+// Create Command
+// ------------------------------
 async function create([projectName]) {
   if (!projectName) {
     console.error("❌ Usage: swipjy create <project-name>");
@@ -150,18 +166,43 @@ async function create([projectName]) {
 
   try {
     console.log("📦 Installing dependencies...");
+
+    // Ensure swipjy gets installed so the app runs after generation
     if (localTarball && fs.existsSync(localTarball)) {
-      // Install the local tarball first; it overrides "latest" in package.json
+      console.log(`➡️  Using local tarball: ${localTarball}`);
       execSync(`npm install "${localTarball}"`, { stdio: "inherit" });
-      // Then install the rest (react, react-dom are already in package.json)
-      execSync("npm install", { stdio: "inherit" });
     } else {
-      // Normal path: install everything from package.json
-      execSync("npm install", { stdio: "inherit" });
+      try {
+        console.log("➡️  Installing swipjy@latest from npm…");
+        execSync("npm install swipjy@latest", { stdio: "inherit" });
+      } catch {
+        console.log(
+          "⚠️  npm install swipjy@latest failed. Falling back to GitHub…",
+        );
+        execSync("npm install git+https://github.com/joss12/SwipJy.git", {
+          stdio: "inherit",
+        });
+      }
     }
 
-    console.log("⚙️  Bundling hydration file...");
-    await bundle(["view", "home"]);
+    // Install the rest (react, react-dom, esbuild)
+    execSync("npm install", { stdio: "inherit" });
+
+    // Verify swipjy is actually installed; if not, install from GitHub as fallback
+    try {
+      require.resolve("swipjy");
+    } catch {
+      console.log(
+        "⚠️  'swipjy' not found locally. Installing from GitHub fallback…",
+      );
+      execSync("npm install git+https://github.com/joss12/SwipJy.git", {
+        stdio: "inherit",
+      });
+    }
+
+    // Build the client bundle using the project's own esbuild
+    console.log("⚙️  Building client bundle...");
+    execSync("npm run build:client", { stdio: "inherit" });
   } catch (err) {
     console.error("❌ Failed during setup:", err.message || err);
     process.exit(1);
