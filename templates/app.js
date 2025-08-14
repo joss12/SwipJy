@@ -1,13 +1,18 @@
-const Swipjy = require("swipjy");
-const app = new Swipjy();
+// app.js
+const { createApp, createRouter } = require("swipjy");
 
-// Static file serving
-app.useStatic("public");
+const app = createApp(); // ✅ create an app instance
+const router = createRouter();
 
-app.get("/", (req, res) => {
-    res.render("home", { name: "Swipjy" });
+// mount routes
+router.get("/", (ctx) => {
+  ctx.send("Hello from Swipjy");
 });
 
+// attach router to app depending on your framework API
+app.use(router.routes());
+
+// start server
 app.listen(3000, () => {
-    console.log("🚀 Swipjy running at http://localhost:3000");
+  console.log("Server running on http://localhost:3000");
 });
