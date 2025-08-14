@@ -1,10 +1,11 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
-const bundle = require("../cli/bundle"); // keep if this is your bundler path
 
+// ------------------------------
+// Templates
+// ------------------------------
 function appTemplate() {
-  // Uses bootstrap if Swipjy.bootstrap exists; falls back if not
   return `const http = require("http");
 const Swipjy = require("swipjy");
 
@@ -84,7 +85,7 @@ DB_DATABASE=swipjy_db
 `;
 }
 
-// If you want to force GitHub for generated apps, set SWIPJY_GIT=1 before running the CLI.
+// If you want to force GitHub for generated apps, run with SWIPJY_GIT=1
 function packageJsonTemplate(name) {
   const fromGit = !!process.env.SWIPJY_GIT;
   const swipjyDep = fromGit
@@ -99,11 +100,16 @@ function packageJsonTemplate(name) {
       type: "commonjs",
       scripts: {
         start: "node app.js",
+        "build:client":
+          "esbuild views/home.hydrate.jsx --bundle --format=esm --outfile=public/home.bundle.js",
       },
       dependencies: {
         swipjy: swipjyDep,
         react: "^18.2.0",
         "react-dom": "^18.2.0",
+      },
+      devDependencies: {
+        esbuild: "^0.21.4",
       },
     },
     null,
@@ -111,6 +117,9 @@ function packageJsonTemplate(name) {
   );
 }
 
+// ------------------------------
+// Create Command
+// ------------------------------
 async function create([projectName]) {
   if (!projectName) {
     console.error("❌ Usage: swipjy create <project-name>");
@@ -158,7 +167,7 @@ async function create([projectName]) {
   try {
     console.log("📦 Installing dependencies...");
 
-    // Ensure swipjy gets installed one way or another so the app runs
+    // Ensure swipjy gets installed so the app runs after generation
     if (localTarball && fs.existsSync(localTarball)) {
       console.log(`➡️  Using local tarball: ${localTarball}`);
       execSync(`npm install "${localTarball}"`, { stdio: "inherit" });
@@ -166,7 +175,7 @@ async function create([projectName]) {
       try {
         console.log("➡️  Installing swipjy@latest from npm…");
         execSync("npm install swipjy@latest", { stdio: "inherit" });
-      } catch (e) {
+      } catch {
         console.log(
           "⚠️  npm install swipjy@latest failed. Falling back to GitHub…",
         );
@@ -176,11 +185,24 @@ async function create([projectName]) {
       }
     }
 
-    // Install the rest (react, react-dom, etc.)
+    // Install the rest (react, react-dom, esbuild)
     execSync("npm install", { stdio: "inherit" });
 
-    console.log("⚙️  Bundling hydration file...");
-    await bundle(["view", "home"]);
+    // Verify swipjy is actually installed; if not, install from GitHub as fallback
+    try {
+      require.resolve("swipjy");
+    } catch {
+      console.log(
+        "⚠️  'swipjy' not found locally. Installing from GitHub fallback…",
+      );
+      execSync("npm install git+https://github.com/joss12/SwipJy.git", {
+        stdio: "inherit",
+      });
+    }
+
+    // Build the client bundle using the project's own esbuild
+    console.log("⚙️  Building client bundle...");
+    execSync("npm run build:client", { stdio: "inherit" });
   } catch (err) {
     console.error("❌ Failed during setup:", err.message || err);
     process.exit(1);
