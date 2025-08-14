@@ -5,11 +5,7 @@ const path = require("path");
 const { execSync } = require("child_process");
 const { createRequire } = require("module");
 
-// Channel switch:
-//   DEV (default): installs swipjy from GitHub main
-//   STABLE: installs from npm (version uses SWIPJY_VERSION or 1.0.27)
-// Usage example:
-//   SWIPJY_CHANNEL=stable SWIPJY_VERSION=1.0.27 npx swipjy create my-app
+// Channel switch (dev: GitHub, stable: npm)
 const CHANNEL = (process.env.SWIPJY_CHANNEL || "dev").toLowerCase();
 const SWIPJY_DEP =
   CHANNEL === "stable"
@@ -22,36 +18,44 @@ const SWIPJY_DEP =
 // Templates
 // ------------------------------
 function appTemplate() {
-  return `const http = require("http");
-const Swipjy = require("swipjy");
+  return `const Swipjy = require("swipjy");
 
+// Create the app
 const app = new Swipjy();
 
 // Optional: router if your package re-exports it; fallback path otherwise
-const createRouter = Swipjy.createRouter || (() => {
-  try { return require("swipjy/lib/router.js").createRouter; } catch { return null; }
-})();
+let createRouter = null;
+if (typeof Swipjy.createRouter === "function") {
+  createRouter = Swipjy.createRouter;
+} else {
+  try {
+    createRouter = require("swipjy/router").createRouter;
+  } catch (_) {
+    createRouter = null;
+  }
+}
 
 if (createRouter) {
-  const router = createRouter(app);
+  const router = createRouter();
   if (typeof Swipjy.bootstrap === "function") {
+    // If your framework exposes a bootstrap helper
     Swipjy.bootstrap(app, router);
   } else {
+    // Minimal home route
     router.get("/", (ctx) => ctx.send("Hello, Swipjy!"));
     app.use(router.routes());
   }
 } else {
+  // No router available: trivial handler
   app.use((ctx) => ctx.send("Hello, Swipjy (no router)!"));
 }
 
+// ✅ Use the framework's server
 const port = process.env.PORT || 3000;
-const server = http.createServer(
-  app.handle || app.handler || app.callback || ((req, res) => app.serve(req, res))
-);
-
-server.listen(port, () => {
+app.listen(port, () => {
   console.log("🚀 Swipjy running at http://localhost:" + port);
-});`;
+});
+`;
 }
 
 function routeTemplate() {
@@ -175,7 +179,7 @@ async function create([projectName]) {
 
   try {
     console.log("📦 Installing dependencies...");
-    // IMPORTANT: Single plain install; do NOT force git/tarball
+    // Single plain install; do NOT force git/tarball
     execSync("npm install", { stdio: "inherit", cwd: projectPath });
 
     // Verify swipjy is resolvable FROM THE PROJECT (not from the CLI)
