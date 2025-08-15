@@ -1,68 +1,51 @@
 {
   "name": "swipjy",
-  "version": "1.0.28",
-  "description": "A lightweight Node.js backend framework with JSX SSR and CLI project generator.",
+  "version": "1.0.27",
+  "description": "A lightweight backend framework with JSX views, middleware, router, and DB support.",
   "type": "commonjs",
   "main": "lib/index.js",
-  "exports": {
-    ".": "./lib/index.js",
-    "./middleware.js": "./lib/middleware.js",
-    "./router": "./lib/router.js"
-  },
   "bin": {
     "swipjy": "bin/swipjy.js"
   },
-  "scripts": {
-    "test": "node test/template-test.js",
-    "test:template": "node test/template-test.js",
-    "start": "node app.js",
-    "stage": "node scripts/sanitize-and-stage.js",
-    "release": "node scripts/sanitize-and-stage.js && cd .publish && npm version patch --no-git-tag-version && npm publish --access public"
+  "exports": {
+    ".": "./lib/index.js",
+    "./db": "./lib/db.js",
+    "./router": "./lib/router.js",
+    "./middleware": "./lib/middleware/index.js"
   },
-  "keywords": [
-    "backend",
-    "framework",
-    "nodejs",
-    "jsx",
-    "cli",
-    "react",
-    "ssr"
-  ],
-  "author": "Eddy Joss Axel Mouity",
-  "license": "MIT",
   "files": [
-    "lib",
-    "bin",
-    "cli",
-    "public",
-    "views",
-    "commands",
-    "templates",
+    "lib/",
+    "bin/",
+    "cli/",
+    "templates/",
     "README.md",
     "LICENSE"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/joss12/swipjy.git"
-  },
-  "bugs": {
-    "url": "https://github.com/joss12/swipjy/issues"
-  },
-  "homepage": "https://github.com/joss12/swipjy#readme",
-  "engines": {
-    "node": ">=18.0.0"
+  "scripts": {
+    "test": "node test/index.js"
   },
   "dependencies": {
-    "chalk": "^4.1.2",
-    "dotenv": "^17.2.1",
-    "mongodb": "^6.18.0",
-    "mysql2": "^3.14.3",
-    "pg": "^8.16.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "mysql2": "^3.9.0",
+    "pg": "^8.11.3",
+    "mongodb": "^6.3.0",
+    "chalk": "^5.3.0"
   },
   "devDependencies": {
-    "jest": "^30.0.5",
-    "supertest": "^7.1.4"
-  }
+    "nodemon": "^3.1.10",
+    "esbuild": "^0.21.4"
+  },
+  "keywords": [
+    "framework",
+    "backend",
+    "nodejs",
+    "jsx",
+    "router",
+    "mysql",
+    "postgresql",
+    "mongodb"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
 }
