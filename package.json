@@ -1,51 +1,46 @@
 {
-  "name": "swipjy",
-  "version": "1.0.27",
-  "description": "A lightweight backend framework with JSX views, middleware, router, and DB support.",
-  "type": "commonjs",
-  "main": "lib/index.js",
-  "bin": {
-    "swipjy": "bin/swipjy.js"
-  },
-  "exports": {
-    ".": "./lib/index.js",
-    "./db": "./lib/db.js",
-    "./router": "./lib/router.js",
-    "./middleware": "./lib/middleware/index.js"
-  },
-  "files": [
-    "lib/",
-    "bin/",
-    "cli/",
-    "templates/",
-    "README.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "test": "node test/index.js"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "mysql2": "^3.9.0",
-    "pg": "^8.11.3",
-    "mongodb": "^6.3.0",
-    "chalk": "^5.3.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.10",
-    "esbuild": "^0.21.4"
-  },
-  "keywords": [
-    "framework",
-    "backend",
-    "nodejs",
-    "jsx",
-    "router",
-    "mysql",
-    "postgresql",
-    "mongodb"
-  ],
-  "author": "Your Name",
-  "license": "MIT"
+    "name": "swipjy",
+    "version": "0.1.0",
+    "description": "SwipJy – Lightweight Node.js framework with SSR, hydration, CLI scaffolding, and dev server",
+    "type": "module",
+    "main": "./lib/index.js",
+    "bin": {
+        "swipjy": "./bin/swipjy.js"
+    },
+    "exports": {
+        ".": {
+            "import": "./lib/index.js"
+        }
+    },
+    "files": [
+        "bin/",
+        "cli/",
+        "lib/",
+        "templates/",
+        "views/",
+        "public/"
+    ],
+    "scripts": {
+        "build": "node scripts/build.mjs",
+        "dev": "swipjy dev",
+        "create": "swipjy create"
+    },
+    "keywords": [
+        "framework",
+        "nodejs",
+        "ssr",
+        "react",
+        "cli",
+        "hydration",
+        "esbuild"
+    ],
+    "author": "Eddy Joss Axel Mouity",
+    "license": "MIT",
+    "dependencies": {
+        "esbuild": "^0.21.5"
+    },
+    "devDependencies": {},
+    "engines": {
+        "node": ">=18.0.0"
+    }
 }
